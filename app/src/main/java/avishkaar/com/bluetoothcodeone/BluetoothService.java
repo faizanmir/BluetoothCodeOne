@@ -204,6 +204,11 @@ public class BluetoothService extends Service {
 
     }
 
+    public void testFunction()
+    {
+        Log.e(TAG, "testFunction: " + "Executed" );
+    }
+
 
 
 

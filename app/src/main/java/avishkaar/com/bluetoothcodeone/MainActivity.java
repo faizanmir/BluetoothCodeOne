@@ -16,9 +16,9 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity  {
     ServiceConnection serviceConnection ;
-    BluetoothService bluetoothService;
+    static BluetoothService bluetoothService;
     String deviceName,deviceAddress;
-
+    static  BluetoothService bts;
     private static final String TAG = "MainActivity";
     Button send,disconnect,reconnect;
     TextView status,name,address;
@@ -56,8 +56,9 @@ public class MainActivity extends AppCompatActivity  {
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                bluetoothService = ((BluetoothService.LocalBinder) service).getService();
+                bts =  bluetoothService = ((BluetoothService.LocalBinder) service).getService();
                 bluetoothService.connect(deviceName,deviceAddress);
+
 
             }
 
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity  {
         };
 
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+        //startService(serviceIntent);
 
         send.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -126,6 +128,8 @@ public class MainActivity extends AppCompatActivity  {
 
 
 
+
+
     }
 
 
@@ -169,5 +173,10 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
+    }
+
+    public void newActivity(View view) {
+        Intent intent = new Intent(MainActivity.this,TransferServiceActivity.class);
+        startActivity(intent);
     }
 }
