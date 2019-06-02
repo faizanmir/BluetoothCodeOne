@@ -137,6 +137,7 @@ public class RemoteActivity extends AppCompatActivity {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
         unbindService(serviceConnection);
+        //This needs further testing
     }
 
 

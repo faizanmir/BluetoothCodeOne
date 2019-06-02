@@ -27,11 +27,9 @@ public class BluetoothService extends Service {
     BluetoothDevice bluetoothDevice;
     private static final String TAG = "BluetoothService";
     BluetoothAdapter bluetoothAdapter;
-    BluetoothManager bluetoothManager;
     BluetoothGattCharacteristic bluetoothGattCharacteristic;
-    ArrayList<BluetoothGattService> bluetoothGattServices;
-    public static UUID uuidService = UUID.fromString("00000021-0000-1000-8000-00805f9b34fb");
-    public static UUID uuidCharacteristic = UUID.fromString("00000052-0000-1000-8000-00805f9b34fb");
+    public static UUID uuidService = UUID.fromString("00000021-0000-1000-8000-00805f9b34fb");//change this for EPSON
+    public static UUID uuidCharacteristic = UUID.fromString("00000052-0000-1000-8000-00805f9b34fb");//THIS TOO
     private int mConnectionState = STATE_DISCONNECTED;
     Handler mHandler;
 
@@ -40,16 +38,16 @@ public class BluetoothService extends Service {
     private static final int STATE_CONNECTED = 2;
 
     public final static String ACTION_GATT_CONNECTED =
-            "avishkaar.com.bluetoothcodeone.ACTION_GATT_CONNECTED";
+            "avishkaar.com.BluetoothCodeOne.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
-            "avishkaar.com.bluetoothcodeone.ACTION_GATT_DISCONNECTED";
+            "avishkaar.com.BluetoothCodeOne.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED =
-            "avishkaar.com.bluetoothcodeone.ACTION_GATT_SERVICES_DISCOVERED";
+            "avishkaar.com.BluetoothCodeOne.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
-            "avishkaar.com.bluetoothcodeone.ACTION_DATA_AVAILABLE";
+            "avishkaar.com.BluetoothCodeOne.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
-            "avishkaar.com.bluetoothcodeone.EXTRA_DATA";
-
+            "avishkaar.com.BluetoothCodeOne.EXTRA_DATA";
+//
 
 
     public BluetoothService() {
@@ -112,23 +110,19 @@ public class BluetoothService extends Service {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            //bluetoothInterfaceReference.onServiceDetected();
             if(status==BluetoothGatt.GATT_SUCCESS)
             {
                 broadCastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             }else Log.e(TAG, "onServicesDiscovered: " + status );
-//            bluetoothInterface.onServiceDiscovered();
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            //bluetoothInterfaceReference.onCharacteristicsRead();
             broadCastUpdate(ACTION_DATA_AVAILABLE,characteristic);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            //bluetoothInterfaceReference.onCharacteristicsWrite();
             broadCastUpdate(ACTION_DATA_AVAILABLE,characteristic);
         }
 
