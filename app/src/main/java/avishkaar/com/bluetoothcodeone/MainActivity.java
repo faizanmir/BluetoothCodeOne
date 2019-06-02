@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,15 +16,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity  {
     ServiceConnection serviceConnection ;
-    static BluetoothService bluetoothService;
+     BluetoothService bluetoothService;
     String deviceName,deviceAddress;
     static  BluetoothService bts;
     private static final String TAG = "MainActivity";
     Button send,disconnect,reconnect;
     TextView status,name,address;
     BroadcastReceiver broadcastReceiver;
+    ArrayList<Message>messageArrayList;
+    Handler handler;
+    Intent serviceIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,31 +41,19 @@ public class MainActivity extends AppCompatActivity  {
         deviceAddress = intent.getStringExtra("DEVICE-ADDRESS");
         name.setText(deviceName);
         address.setText(deviceAddress);
-        BluetoothService.BluetoothInterface bluetoothInterface = new BluetoothService.BluetoothInterface() {
-            @Override
-            public void onConnectionChange() {
-                Log.e(TAG, "onConnectionChange: "  );
-            }
+        messageArrayList = new ArrayList<>();
+        handler = new Handler();
 
-            @Override
-            public void onServiceDiscovered() {
-                Log.e(TAG, "onServiceDiscovered: "  );
-            }
-
-            @Override
-            public void onCharacteristicWrite() {
-
-            }
-        };
 
         Log.e(TAG, "onCreate: " + "NAME:"+"  " + deviceName + "ADDRESS:"+"   " + deviceAddress);
-        Intent serviceIntent = new Intent(MainActivity.this,BluetoothService.class);
+        serviceIntent = new Intent(MainActivity.this,BluetoothService.class);
 
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 bts =  bluetoothService = ((BluetoothService.LocalBinder) service).getService();
                 bluetoothService.connect(deviceName,deviceAddress);
+                bluetoothService.mHandlerToService(handler);
 
 
             }
@@ -76,6 +72,8 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onClick(View v) {
                 bluetoothService.sendData("av,22,MC,1,DM1,720,0,~");
+
+
             }
         });
 
@@ -93,22 +91,13 @@ public class MainActivity extends AppCompatActivity  {
         });
 
 
-
-
-
-
-
-
-
-
-
-
 //    bluetoothService.listener(bluetoothInterface);
 
          broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String broadcast = intent.getAction();
+
                 if(BluetoothService.ACTION_GATT_CONNECTED.equals(broadcast))
                 {
                     connectionUpdate("Connected");
@@ -124,11 +113,6 @@ public class MainActivity extends AppCompatActivity  {
             }
         };
          registerReceiver(broadcastReceiver,makeGattUpdateIntentFilter());
-
-
-
-
-
 
     }
 
@@ -149,12 +133,14 @@ public class MainActivity extends AppCompatActivity  {
     protected void onResume() {
         super.onResume();
         registerReceiver(broadcastReceiver, makeGattUpdateIntentFilter());
+        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
+        unbindService(serviceConnection);
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -176,7 +162,9 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     public void newActivity(View view) {
-        Intent intent = new Intent(MainActivity.this,TransferServiceActivity.class);
+        Intent intent = new Intent(MainActivity.this, RemoteActivity.class);
         startActivity(intent);
     }
+
+
 }

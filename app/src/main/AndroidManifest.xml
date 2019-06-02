@@ -16,7 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".TransferServiceActivity"></activity>
+        <activity android:name=".RemoteActivity"
+            android:screenOrientation="landscape">
+
+        </activity>
 
         <service
             android:name=".BluetoothService"

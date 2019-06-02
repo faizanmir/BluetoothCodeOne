@@ -12,11 +12,13 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +33,7 @@ public class BluetoothService extends Service {
     public static UUID uuidService = UUID.fromString("00000021-0000-1000-8000-00805f9b34fb");
     public static UUID uuidCharacteristic = UUID.fromString("00000052-0000-1000-8000-00805f9b34fb");
     private int mConnectionState = STATE_DISCONNECTED;
+    Handler mHandler;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -51,23 +54,13 @@ public class BluetoothService extends Service {
 
     public BluetoothService() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-//        BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+
 
     }
-
-    public  interface BluetoothInterface {
-        void onConnectionChange();
-        void onServiceDiscovered();
-        void onCharacteristicWrite();
-    }
-    BluetoothInterface bluetoothInterface;
-
-    void listerner(BluetoothInterface bluetoothInterface)
+    void mHandlerToService(Handler mHandler)
     {
-        this.bluetoothInterface = bluetoothInterface;
+        this.mHandler = mHandler;
     }
-
-
 
 
 
@@ -130,15 +123,18 @@ public class BluetoothService extends Service {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             //bluetoothInterfaceReference.onCharacteristicsRead();
+            broadCastUpdate(ACTION_DATA_AVAILABLE,characteristic);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             //bluetoothInterfaceReference.onCharacteristicsWrite();
+            broadCastUpdate(ACTION_DATA_AVAILABLE,characteristic);
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+
 
         }
     };
@@ -147,6 +143,16 @@ public class BluetoothService extends Service {
         Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
+    public  void broadCastUpdate(String action,BluetoothGattCharacteristic characteristic)
+    {
+        Intent intent = new Intent(action);
+        final byte[] data = characteristic.getValue();
+        Log.i(TAG, "data"+characteristic.getValue());
+        intent.putExtra(EXTRA_DATA,String.format("%s", new String(data)));
+        sendBroadcast(intent);
+
+    }
+
 
 
 
@@ -156,7 +162,7 @@ public class BluetoothService extends Service {
     public  void connect (String mBluetoothName,String mBluetoothAddress){
         Log.e(TAG, "connect : "+ "Device Received" + mBluetoothName);
         bluetoothDevice = bluetoothAdapter.getRemoteDevice(mBluetoothAddress);
-        bluetoothGatt = bluetoothDevice.connectGatt(this,true,bluetoothGattCallback);
+        bluetoothGatt = bluetoothDevice.connectGatt(this,false,bluetoothGattCallback);
 
 
     }
@@ -164,10 +170,27 @@ public class BluetoothService extends Service {
     public void sendData(String data)
     {
         Log.e(TAG, "sendData: " +data );
-        if(!(bluetoothGattCharacteristic ==null)) {
-            bluetoothGattCharacteristic.setValue(data);
-            bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
-        }
+
+            int chunksize = 20;
+            int start =0;
+            byte[]source= data.getBytes();
+            int packetsToSend = (int) Math.ceil( data.length() / chunksize);
+            byte[][] packets = new byte[packetsToSend][chunksize];
+            for(int i = 0; i < packets.length; i++) {
+                packets[i] = Arrays.copyOfRange(source,start, start + chunksize);
+                start += chunksize;
+
+            }
+            for (byte [] b : packets)
+            {
+              for(byte aByte : b)
+              {
+                  Log.e(TAG, "sendData: " + (char) aByte + b );
+              }
+            }
+            sendSplitPackets(packets);
+
+
 
     }
 
@@ -209,6 +232,23 @@ public class BluetoothService extends Service {
         Log.e(TAG, "testFunction: " + "Executed" );
     }
 
+    void sendSplitPackets(byte[][] packet){
+        if(!(bluetoothGattCharacteristic ==null)) {
+            for (final byte[] data:packet) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bluetoothGattCharacteristic.setValue(data);
+                        bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
+                        Log.e(TAG, "run: " + data);
+                    }
+                    }, 30);
+
+            }
+
+        }
+
+    }
 
 
 
