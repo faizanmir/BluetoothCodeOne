@@ -36,13 +36,7 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
-        Intent intent = getIntent();
-        deviceName = intent.getStringExtra("DEVICE-NAME");
-        deviceAddress = intent.getStringExtra("DEVICE-ADDRESS");
-        name.setText(deviceName);
-        address.setText(deviceAddress);
-        messageArrayList = new ArrayList<>();
-        handler = new Handler();
+
 
 
         Log.e(TAG, "onCreate: " + "NAME:"+"  " + deviceName + "ADDRESS:"+"   " + deviceAddress);
@@ -56,6 +50,7 @@ public class MainActivity extends AppCompatActivity  {
                 bluetoothService.mHandlerToService(handler);
 
 
+
             }
 
             @Override
@@ -66,7 +61,6 @@ public class MainActivity extends AppCompatActivity  {
         };
 
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
-        //startService(serviceIntent);
 
         send.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,9 +83,6 @@ public class MainActivity extends AppCompatActivity  {
             public void onClick(View v) {bluetoothService.connect(deviceName,deviceAddress);
             }
         });
-
-
-//    bluetoothService.listener(bluetoothInterface);
 
          broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -125,6 +116,13 @@ public class MainActivity extends AppCompatActivity  {
         address = findViewById(R.id.deviceAddress);
         disconnect = findViewById(R.id.disconnect);
         send = findViewById(R.id.sendData);
+        Intent intent = getIntent();
+        deviceName = intent.getStringExtra("DEVICE-NAME");
+        deviceAddress = intent.getStringExtra("DEVICE-ADDRESS");
+        name.setText(deviceName);
+        address.setText(deviceAddress);
+        messageArrayList = new ArrayList<>();
+        handler = new Handler();
         reconnect = findViewById(R.id.connect);
     }
 
@@ -140,7 +138,7 @@ public class MainActivity extends AppCompatActivity  {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
-        unbindService(serviceConnection);
+
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {

@@ -85,7 +85,13 @@ public class RemoteActivity extends AppCompatActivity {
                     }
                 };
                 registerReceiver(broadcastReceiver,makeGattUpdateIntentFilter());
-
+                up.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        bluetoothService.sendData(ControlStrings.stop);
+                        Log.e(TAG, "onClick: " + "Button up" );
+                    }
+                });
 
                 up.setOnTouchListener(new View.OnTouchListener() {
                     @Override
@@ -96,11 +102,27 @@ public class RemoteActivity extends AppCompatActivity {
                         }
                         else if(event.getAction()==MotionEvent.ACTION_UP)
                         {
-                            bluetoothService.sendData(ControlStrings.stop);
+                            up.performClick();
                         }
                         return true;
                     }
                 });
+
+                right.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if(event.getAction() ==MotionEvent.ACTION_DOWN)
+                        {
+                            bluetoothService.sendData(ControlStrings.oneMotorStart);
+                        }
+                        else if(event.getAction()==MotionEvent.ACTION_UP)
+                        {
+                            bluetoothService.sendData(ControlStrings.oneMotorStop);
+                        }
+                        return true;
+                    }
+                });
+
             }
 
 

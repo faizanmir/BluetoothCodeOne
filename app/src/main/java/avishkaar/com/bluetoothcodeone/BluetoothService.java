@@ -13,14 +13,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BluetoothService extends Service {
     BluetoothGatt bluetoothGatt;
@@ -32,6 +39,8 @@ public class BluetoothService extends Service {
     public static UUID uuidCharacteristic = UUID.fromString("00000052-0000-1000-8000-00805f9b34fb");//THIS TOO
     private int mConnectionState = STATE_DISCONNECTED;
     Handler mHandler;
+    ExecutorService executorService;
+
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -52,6 +61,7 @@ public class BluetoothService extends Service {
 
     public BluetoothService() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        executorService = Executors.newSingleThreadExecutor();
 
 
     }
@@ -147,49 +157,59 @@ public class BluetoothService extends Service {
 
     }
 
-
-
-
-
-
-
+    
     public  void connect (String mBluetoothName,String mBluetoothAddress){
-        Log.e(TAG, "connect : "+ "Device Received" + mBluetoothName);
+        Log.e(TAG, "connect : "+ "Device Received " + mBluetoothName);
         bluetoothDevice = bluetoothAdapter.getRemoteDevice(mBluetoothAddress);
         bluetoothGatt = bluetoothDevice.connectGatt(this,false,bluetoothGattCallback);
 
 
     }
 
-    public void sendData(String data)
-    {
-        Log.e(TAG, "sendData: " +data );
+    public void sendData(final String data) {
 
-            int chunksize = 20;
-            int start =0;
-            byte[]source= data.getBytes();
-            int packetsToSend = (int) Math.ceil( data.length() / chunksize);
-            byte[][] packets = new byte[packetsToSend][chunksize];
-            for(int i = 0; i < packets.length; i++) {
-                packets[i] = Arrays.copyOfRange(source,start, start + chunksize);
-                start += chunksize;
+        Log.e(TAG, "sendData:data " + data);
+        int chunksize = 20;
+        int start = 0;
+        byte[] source = data.getBytes();
+
+        int packetsToSend = (int) Math.ceil(data.length() / chunksize +1);
+        byte[][] packets = new byte[packetsToSend][chunksize];
+
+        for (int i = 0; i < packets.length; i++) {
+                packets[i] = Arrays.copyOfRange(source,start,start+chunksize);
+            start += chunksize;
+
+        }
+
+        Log.e(TAG, "sendData: " + Arrays.deepToString(packets));
+
+
+            if(!(bluetoothGattCharacteristic ==null)) {
+            for (final byte[] dataArray : packets) {
+                final String dataInString = new String(dataArray);
+                Log.e(TAG, "sendData:dataInString " + dataInString );
+
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        bluetoothGattCharacteristic.setValue(dataInString);
+                            bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
+                    }
+                };
+                executorService.submit(runnable);
 
             }
-            for (byte [] b : packets)
-            {
-              for(byte aByte : b)
-              {
-                  Log.e(TAG, "sendData: " + (char) aByte + b );
-              }
-            }
-            sendSplitPackets(packets);
 
-
-
+        }
     }
 
     public void getService(){
-        BluetoothGattCharacteristic blec = null;
         List<BluetoothGattService>serviceList = bluetoothGatt.getServices();
 
         for (BluetoothGattService s:serviceList)
@@ -225,30 +245,6 @@ public class BluetoothService extends Service {
     {
         Log.e(TAG, "testFunction: " + "Executed" );
     }
-
-    void sendSplitPackets(byte[][] packet){
-        if(!(bluetoothGattCharacteristic ==null)) {
-            for (final byte[] data:packet) {
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        bluetoothGattCharacteristic.setValue(data);
-                        bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
-                        Log.e(TAG, "run: " + data);
-                    }
-                    }, 30);
-
-            }
-
-        }
-
-    }
-
-
-
-
-
-
 
 
 }
