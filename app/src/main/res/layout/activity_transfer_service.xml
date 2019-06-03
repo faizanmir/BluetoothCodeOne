@@ -58,7 +58,7 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/invisibleBut"
         android:layout_margin="10dp"
-        android:text="Left"
+        android:text="LED"
         android:id="@+id/leftBut"/>
 
 </RelativeLayout>

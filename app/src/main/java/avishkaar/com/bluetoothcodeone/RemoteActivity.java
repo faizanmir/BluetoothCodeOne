@@ -126,6 +126,7 @@ public class RemoteActivity extends AppCompatActivity {
             }
 
 
+
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothService.ACTION_GATT_CONNECTED);

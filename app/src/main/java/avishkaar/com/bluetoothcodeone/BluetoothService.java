@@ -152,12 +152,12 @@ public class BluetoothService extends Service {
         Intent intent = new Intent(action);
         final byte[] data = characteristic.getValue();
         Log.i(TAG, "data"+characteristic.getValue());
-        intent.putExtra(EXTRA_DATA,String.format("%s", new String(data)));
+       intent.putExtra(EXTRA_DATA,String.format("%s", new String(data)));
         sendBroadcast(intent);
 
     }
 
-    
+
     public  void connect (String mBluetoothName,String mBluetoothAddress){
         Log.e(TAG, "connect : "+ "Device Received " + mBluetoothName);
         bluetoothDevice = bluetoothAdapter.getRemoteDevice(mBluetoothAddress);
@@ -187,8 +187,18 @@ public class BluetoothService extends Service {
 
             if(!(bluetoothGattCharacteristic ==null)) {
             for (final byte[] dataArray : packets) {
+                for (int i = 0; i <dataArray.length ; i++) {
+                    if(dataArray[i]==0)
+                    {
+                        dataArray[i] = dataArray[i-1];
+                    }
+                }
+
+
+
                 final String dataInString = new String(dataArray);
                 Log.e(TAG, "sendData:dataInString " + dataInString );
+                Log.e(TAG, "sendData: "+Arrays.toString(dataArray) );
 
                 Runnable runnable = new Runnable() {
                     @Override
@@ -198,11 +208,11 @@ public class BluetoothService extends Service {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        bluetoothGattCharacteristic.setValue(dataInString);
+                            bluetoothGattCharacteristic.setValue(dataInString);
                             bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
                     }
                 };
-                executorService.submit(runnable);
+                executorService.execute(runnable);
 
             }
 
@@ -217,12 +227,25 @@ public class BluetoothService extends Service {
             Log.e(TAG, "getService: " + s.getUuid() );
         }
         for(BluetoothGattService bluetoothGattService: serviceList)
+
         {
+            for(BluetoothGattCharacteristic c :bluetoothGattService.getCharacteristics())
+        {
+            Log.e(TAG, "getService:char "+ c.getUuid()  + "Service : "+ bluetoothGattService.getUuid());
+        }
+
+
+
             if(bluetoothGattService.getUuid().equals(uuidService))
             {
                 List<BluetoothGattCharacteristic>characteristicList = bluetoothGattService.getCharacteristics();
+
+
+
+
                 for(BluetoothGattCharacteristic characteristic:characteristicList)
                 {
+                    Log.e(TAG, "getService:Charact "+ characteristic.getUuid() );
                     if(characteristic.getUuid().equals(uuidCharacteristic)) {
                         bluetoothGattCharacteristic = characteristic;
                         Log.e(TAG, "getService: " +"Characteristics" +bluetoothGattCharacteristic.getUuid() );
