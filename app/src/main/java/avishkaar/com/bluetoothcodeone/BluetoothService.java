@@ -40,6 +40,7 @@ public class BluetoothService extends Service {
     private int mConnectionState = STATE_DISCONNECTED;
     Handler mHandler;
     ExecutorService executorService;
+    int packetsToSend;
 
 
     private static final int STATE_DISCONNECTED = 0;
@@ -172,13 +173,27 @@ public class BluetoothService extends Service {
         int chunksize = 20;
         int start = 0;
         byte[] source = data.getBytes();
+        int delay =0;
 
-        int packetsToSend = (int) Math.ceil(data.length() / chunksize +1);
+        if(data.length()>=30) {
+             packetsToSend = (int) Math.ceil(data.length() / chunksize+1);
+             delay = 30;
+        }else if(
+                data.length()>20){
+                packetsToSend =(int) Math.ceil(data.length()/chunksize+1);
+        }else {
+
+                packetsToSend = 1;
+                chunksize = data.length();
+                delay =20;
+        }
+
         byte[][] packets = new byte[packetsToSend][chunksize];
 
         for (int i = 0; i < packets.length; i++) {
                 packets[i] = Arrays.copyOfRange(source,start,start+chunksize);
             start += chunksize;
+            delay = 10;
 
         }
 
@@ -187,24 +202,16 @@ public class BluetoothService extends Service {
 
             if(!(bluetoothGattCharacteristic ==null)) {
             for (final byte[] dataArray : packets) {
-                for (int i = 0; i <dataArray.length ; i++) {
-                    if(dataArray[i]==0)
-                    {
-                        dataArray[i] = dataArray[i-1];
-                    }
-                }
-
-
-
                 final String dataInString = new String(dataArray);
                 Log.e(TAG, "sendData:dataInString " + dataInString );
                 Log.e(TAG, "sendData: "+Arrays.toString(dataArray) );
 
+                final int finalDelay = delay;
                 Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            Thread.sleep(20);
+                            Thread.sleep(finalDelay);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -234,15 +241,9 @@ public class BluetoothService extends Service {
             Log.e(TAG, "getService:char "+ c.getUuid()  + "Service : "+ bluetoothGattService.getUuid());
         }
 
-
-
             if(bluetoothGattService.getUuid().equals(uuidService))
             {
                 List<BluetoothGattCharacteristic>characteristicList = bluetoothGattService.getCharacteristics();
-
-
-
-
                 for(BluetoothGattCharacteristic characteristic:characteristicList)
                 {
                     Log.e(TAG, "getService:Charact "+ characteristic.getUuid() );

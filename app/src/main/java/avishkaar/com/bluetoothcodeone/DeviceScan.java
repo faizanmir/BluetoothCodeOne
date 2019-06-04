@@ -42,11 +42,9 @@ public class DeviceScan extends AppCompatActivity {
         final Handler handler = new Handler();
         bluetoothDevices = new ArrayList<>();
         devices = new ArrayList<>();
-        bleAdapter = new BleAdapter(devices,DeviceScan.this);
+
         RecyclerView BleRv = findViewById(R.id.listView);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this,RecyclerView.VERTICAL,false);
-        BleRv.setLayoutManager(layoutManager);
-        BleRv.setAdapter(bleAdapter);
+
         final ScanCallback scanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
@@ -73,6 +71,10 @@ public class DeviceScan extends AppCompatActivity {
                 super.onScanFailed(errorCode);
             }
         };
+        bleAdapter = new BleAdapter(devices,DeviceScan.this,bluetoothScanner,scanCallback);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this,RecyclerView.VERTICAL,false);
+        BleRv.setLayoutManager(layoutManager);
+        BleRv.setAdapter(bleAdapter);
         scan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

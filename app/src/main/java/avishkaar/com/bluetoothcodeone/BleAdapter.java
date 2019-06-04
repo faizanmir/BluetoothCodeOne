@@ -1,6 +1,8 @@
 package avishkaar.com.bluetoothcodeone;
 
 
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -18,17 +20,22 @@ import java.util.ArrayList;
 public class BleAdapter extends RecyclerView.Adapter<BleAdapter.viewHolder> {
 ArrayList<BluetoothModelClass>devices;
 Context mContext;
+BluetoothLeScanner bluetoothLeScanner;
+ScanCallback scanCallback;
 
 
-    public BleAdapter(ArrayList<BluetoothModelClass> devices, Context mContext) {
+    public BleAdapter(ArrayList<BluetoothModelClass> devices, Context mContext, BluetoothLeScanner bluetoothLeScanner, ScanCallback scanCallback) {
         this.devices = devices;
         this.mContext = mContext;
+        this.bluetoothLeScanner = bluetoothLeScanner;
+        this.scanCallback = scanCallback;
     }
 
 
     @NonNull
     @Override
     public viewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        bluetoothLeScanner.stopScan(scanCallback);
         return new viewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.ble,viewGroup,false));
     }
 
@@ -42,6 +49,7 @@ Context mContext;
                 Intent intent = new Intent(mContext,MainActivity.class);
                 intent.putExtra("DEVICE-NAME",devices.get(i).deviceName);
                 intent.putExtra("DEVICE-ADDRESS",devices.get(i).deviceAddress);
+
                 mContext.startActivity(intent);
 
             }
